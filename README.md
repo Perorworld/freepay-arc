@@ -66,6 +66,7 @@
   .btn-danger { background: #ef4444; color: #fff; }
   .btn-warn { background: #f59e0b; color: #000; }
   .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
   .job-card { background: #0a0e1a; border: 1px solid #1f2937; border-radius: 10px; padding: 16px; margin-bottom: 12px; }
   .job-card h3 { font-size: 0.9rem; font-weight: 700; margin-bottom: 8px; }
   .chip { display: inline-block; font-size: 0.72rem; padding: 3px 10px; border-radius: 99px; font-weight: 600; margin-bottom: 10px; }
@@ -150,7 +151,7 @@
   <p>Clients lock USDC in escrow. You get paid instantly on Arc when work is done. No Payoneer. No Paypal. No delays.</p>
   <div class="stats">
     <div class="stat"><strong id="ngnRate">—</strong>NGN / USDC</div>
-[11/05/2026 01:22] BillyJnr Airtel line: <div class="stat"><strong>~0.3s</strong>Settlement</div>
+    <div class="stat"><strong>~0.3s</strong>Settlement</div>
     <div class="stat"><strong>&lt;$0.01</strong>Gas Fee</div>
     <div class="stat"><strong>0%</strong>Platform Fee</div>
     <div class="stat"><strong id="contractShort">0x2481…1D4d</strong>Contract</div>
@@ -244,7 +245,7 @@ async function connectWallet() {
     provider = new ethers.BrowserProvider(window.ethereum);
     signer = await provider.getSigner();
     account = await signer.getAddress();
-contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+    contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
     usdcContract = new ethers.Contract(USDC_ADDRESS, USDC_ABI, signer);
     document.getElementById("walletShort").textContent = shortAddr(account);
     document.getElementById("connectBtn").textContent = "Connected ✓";
@@ -270,14 +271,14 @@ fetchRate();
 
 document.getElementById("jobAmount").addEventListener("input", e => {
   const v = parseFloat(e.target.value);
-  document.getElementById("ngnPreview").textContent = v > 0 ? ≈ ₦${(v * ngnRate).toLocaleString()} NGN : "";
+  document.getElementById("ngnPreview").textContent = v > 0 ? `≈ ₦${(v * ngnRate).toLocaleString()} NGN` : "";
 });
 
 async function postJob() {
   const title = document.getElementById("jobTitle").value.trim();
   const freelancer = document.getElementById("freelancerAddr").value.trim();
   const amount = parseFloat(document.getElementById("jobAmount").value);
-  if (!title  !freelancer  !amount) { toast("Fill all fields", "warn"); return; }
+  if (!title || !freelancer || !amount) { toast("Fill all fields", "warn"); return; }
   if (!ethers.isAddress(freelancer)) { toast("Invalid freelancer address", "warn"); return; }
   const btn = document.getElementById("postBtn");
   try {
@@ -331,27 +332,27 @@ async function loadFreelancerJobs() {
 function renderJob(job, id, role) {
   const statusMap = ["OPEN","FUNDED","COMPLETED","DISPUTED","CANCELLED"];
   const chipMap = ["chip-funded","chip-funded","chip-completed","chip-disputed","chip-cancelled"];
-const status = Number(job[5]);
+  const status = Number(job[5]);
   const amount = ethers.formatUnits(job[3], 6);
   const ngn = (parseFloat(amount) * ngnRate).toLocaleString();
   const created = new Date(Number(job[6]) * 1000).toLocaleDateString();
   let actions = "";
   if (role === "client" && status === 1) {
-    actions += <button class="btn btn-success" onclick="releasePayment(${id})">✅ Release Payment</button>;
-    actions += <button class="btn btn-danger" onclick="cancelJob(${id})">❌ Cancel</button>;
+    actions += `<button class="btn btn-success" onclick="releasePayment(${id})">✅ Release Payment</button>`;
+    actions += `<button class="btn btn-danger" onclick="cancelJob(${id})">❌ Cancel</button>`;
   }
   if (role === "freelancer" && status === 1) {
-    actions += <button class="btn btn-warn" onclick="raiseDispute(${id})">⚠️ Raise Dispute</button>;
+    actions += `<button class="btn btn-warn" onclick="raiseDispute(${id})">⚠️ Raise Dispute</button>`;
   }
-  return <div class="job-card">
+  return `<div class="job-card">
     <h3>${job[4]}</h3>
     <span class="chip ${chipMap[status]}">${statusMap[status]}</span>
     <span style="font-size:0.72rem;color:#6b7280;margin-left:8px;">Job #${id} · ${created}</span>
     <div class="amount">$${amount} USDC</div>
     <div class="ngn">≈ ₦${ngn} NGN</div>
     <div class="addr">${role === "client" ? "To: " + job[2] : "From: " + job[1]}</div>
-    ${actions ? <div class="job-actions">${actions}</div> : ""}
-  </div>;
+    ${actions ? `<div class="job-actions">${actions}</div>` : ""}
+  </div>`;
 }
 
 async function releasePayment(id) {
@@ -388,11 +389,11 @@ function listenToEvents() {
   const feed = document.getElementById("feedBox");
   contract.on("JobCreated", (jobId, client, freelancer, amount, title) => {
     const amt = ethers.formatUnits(amount, 6);
-    addFeed(Job #${jobId} created · "${title}" · $${amt} USDC locked);
+    addFeed(`Job #${jobId} created · "${title}" · $${amt} USDC locked`);
   });
   contract.on("PaymentReleased", (jobId, freelancer, amount) => {
     const amt = ethers.formatUnits(amount, 6);
-    addFeed(Job #${jobId} · $${amt} USDC released to ${shortAddr(freelancer)});
+    addFeed(`Job #${jobId} · $${amt} USDC released to ${shortAddr(freelancer)}`);
   });
   addFeed("Connected to Arc Testnet · Listening for events…");
 }
@@ -401,7 +402,7 @@ function addFeed(msg) {
   const feed = document.getElementById("feedBox");
   const line = document.createElement("div");
   line.className = "feed-line";
-  line.textContent = [${new Date().toLocaleTimeString()}] ${msg};
+  line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
   feed.prepend(line);
 }
 
